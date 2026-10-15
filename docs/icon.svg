@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="18 18 72 72">
+  <defs>
+    <linearGradient id="bg" x1="20" y1="0" x2="88" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF6B8B"/><stop offset="0.55" stop-color="#F5304F"/><stop offset="1" stop-color="#8E1BD6"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="34" y1="28" x2="74" y2="82" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.4"/><stop offset="1" stop-color="#fff" stop-opacity="0.1"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="30" y1="28" x2="78" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.95"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.15"/><stop offset="1" stop-color="#fff" stop-opacity="0.7"/>
+    </linearGradient>
+    <clipPath id="sq"><rect x="18" y="18" width="72" height="72" rx="16"/></clipPath>
+  </defs>
+  <g clip-path="url(#sq)">
+    <rect width="108" height="108" fill="url(#bg)"/>
+    <circle cx="30" cy="22" r="20" fill="#FFC46B" fill-opacity="0.33"/>
+    <circle cx="84" cy="86" r="22" fill="#55C8FF" fill-opacity="0.27"/>
+    <circle cx="54" cy="54" r="28" fill="url(#glass)"/>
+    <circle cx="54" cy="54" r="27.25" fill="none" stroke="url(#rim)" stroke-width="1.5"/>
+    <path fill="#fff" d="M47,44.5L66,39.5L66,61.5A5.5,4.6 0,1 1,63 57.4L63,46.2L50,49.6L50,65.5A5.5,4.6 0,1 1,47 61.4Z"/>
+  </g>
+</svg>
