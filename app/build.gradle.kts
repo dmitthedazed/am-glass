@@ -11,8 +11,8 @@ android {
         applicationId = "dev.dimka.amglass"
         minSdk = 33
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1"
+        versionCode = 2
+        versionName = "0.2"
     }
 
     // Module R ids live inside Apple Music's process next to its own 0x7f ids;
