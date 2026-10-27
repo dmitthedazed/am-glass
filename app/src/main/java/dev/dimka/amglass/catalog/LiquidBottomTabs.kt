@@ -3,7 +3,6 @@ package dev.dimka.amglass.catalog
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
@@ -16,6 +15,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,6 +51,7 @@ import com.kyant.backdrop.shadow.InnerShadow
 import com.kyant.backdrop.shadow.Shadow
 import com.kyant.shapes.Capsule
 import dev.dimka.amglass.AdaptiveGlass
+import dev.dimka.amglass.DynamicColors
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
@@ -61,19 +62,16 @@ import kotlin.math.sign
 fun LiquidBottomTabs(
     selectedTabIndex: () -> Int,
     onTabSelected: (index: Int) -> Unit,
+    onTabReselected: (index: Int) -> Unit,
     backdrop: Backdrop,
     tabsCount: Int,
     glass: AdaptiveGlass,
     modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit
 ) {
-    val isLightTheme = !isSystemInDarkTheme()
-    val accentColor =
-        if (isLightTheme) Color(0xFF0088FF)
-        else Color(0xFF0091FF)
-    val containerColor =
-        if (isLightTheme) Color(0xFFFAFAFA).copy(0.4f)
-        else Color(0xFF121212).copy(0.4f)
+    // Follows the glass, not the system theme: the bar may be inverted.
+    val isLightTheme = glass.isLight
+    val accentColor = Color(DynamicColors.accent(dark = !isLightTheme))
 
     val tabsBackdrop = rememberLayerBackdrop()
 
@@ -101,6 +99,9 @@ fun LiquidBottomTabs(
         var currentIndex by remember(selectedTabIndex) {
             mutableIntStateOf(selectedTabIndex())
         }
+        // A tap on the selected tab lands on the drag indicator, not the tab: treat a release
+        // without real movement on the same index as a reselect (native "back to root").
+        var dragDistance by remember { mutableFloatStateOf(0f) }
         val dampedDragAnimation = remember(animationScope) {
             DampedDragAnimation(
                 animationScope = animationScope,
@@ -109,9 +110,10 @@ fun LiquidBottomTabs(
                 visibilityThreshold = 0.001f,
                 initialScale = 1f,
                 pressedScale = 78f / 56f,
-                onDragStarted = {},
+                onDragStarted = { dragDistance = 0f },
                 onDragStopped = {
                     val targetIndex = targetValue.fastRoundToInt().fastCoerceIn(0, tabsCount - 1)
+                    if (targetIndex == currentIndex && dragDistance < tabWidth / 4f) onTabReselected(targetIndex)
                     currentIndex = targetIndex
                     animateToValue(targetIndex.toFloat())
                     animationScope.launch {
@@ -122,6 +124,7 @@ fun LiquidBottomTabs(
                     }
                 },
                 onDrag = { _, dragAmount ->
+                    dragDistance += abs(dragAmount.x)
                     updateValue(
                         (targetValue + dragAmount.x / tabWidth * if (isLtr) 1f else -1f)
                             .fastCoerceIn(0f, (tabsCount - 1).toFloat())
@@ -171,7 +174,6 @@ fun LiquidBottomTabs(
                     effects = { with(glass) { effects() } },
                     highlight = { Highlight.Default },
                     shadow = { Shadow() },
-                    onDrawBackdrop = glass.recordBackdrop,
                     onDrawSurface = glass.drawSurface,
                     layerBlock = {
                         val progress = dampedDragAnimation.pressProgress

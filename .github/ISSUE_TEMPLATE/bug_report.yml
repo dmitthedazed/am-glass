@@ -1,0 +1,43 @@
+name: Bug report
+description: Glass is missing, looks broken, or Apple Music crashes
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Which screen, what you see. Screenshots help a lot.
+    validations:
+      required: true
+
+  - type: input
+    id: phone
+    attributes:
+      label: Phone and Android version
+      placeholder: Pixel 9, Android 16
+    validations:
+      required: true
+
+  - type: input
+    id: am
+    attributes:
+      label: Apple Music version
+      description: Settings → Apps → Apple Music. Only 7.0.0-beta (1611) is supported.
+      placeholder: 7.0.0-beta (1611)
+    validations:
+      required: true
+
+  - type: input
+    id: framework
+    attributes:
+      label: Framework and root
+      placeholder: LSPosed 1.10, KernelSU
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: |
+        `adb shell su -c 'grep -h AmGlass /data/adb/lspd/log/modules_*.log | tail -50'`
+        or the module log from the LSPosed app.
+      render: text

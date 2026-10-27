@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.toArgb
 import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.shadow.Shadow
@@ -177,6 +176,7 @@ private fun AppleMusicTabs(backdrop: Backdrop, tabs: NativeTabs) {
     LiquidBottomTabs(
         selectedTabIndex = selectedTabIndex,
         onTabSelected = { if (it != tabs.selectedIndex) tabs.select(it) },
+        onTabReselected = { tabs.select(it) },
         backdrop = backdrop,
         tabsCount = items.size,
         glass = glass,
@@ -210,9 +210,7 @@ private fun AppleMusicTabs(backdrop: Backdrop, tabs: NativeTabs) {
 @Composable
 private fun GlassCapsule(backdrop: Backdrop, onContentColor: (Int) -> Unit) {
     val glass = rememberAdaptiveGlass()
-    LaunchedEffect(glass) {
-        snapshotFlow { glass.contentColor.toArgb() }.collect(onContentColor)
-    }
+    LaunchedEffect(glass) { onContentColor(glass.contentColor.toArgb()) }
     Box(
         Modifier
             .drawBackdrop(
@@ -221,7 +219,6 @@ private fun GlassCapsule(backdrop: Backdrop, onContentColor: (Int) -> Unit) {
                 effects = { with(glass) { effects(size.height / 64f.dp.toPx()) } },
                 highlight = { Highlight.Default },
                 shadow = { Shadow() },
-                onDrawBackdrop = glass.recordBackdrop,
                 onDrawSurface = glass.drawSurface,
             )
             .fillMaxSize()
@@ -236,7 +233,9 @@ private fun GlassCapsule(backdrop: Backdrop, onContentColor: (Int) -> Unit) {
 private fun GlassOption(backdrop: Backdrop) {
     val glass = rememberAdaptiveGlass()
     BoxWithConstraints(Modifier.fillMaxSize()) {
-    val shape = if (abs((maxWidth - maxHeight).value) < 4f) Capsule() else RoundedRectangle(24f.dp)
+    // Buttons are small squares; a short menu can be square too, so size decides, not just aspect.
+    val isButton = abs((maxWidth - maxHeight).value) < 4f && maxHeight <= 64f.dp
+    val shape = if (isButton) Capsule() else RoundedRectangle(24f.dp)
     Box(
         Modifier
             .drawBackdrop(
@@ -244,7 +243,6 @@ private fun GlassOption(backdrop: Backdrop) {
                 shape = { shape },
                 effects = { with(glass) { effects(size.minDimension / 64f.dp.toPx()) } },
                 highlight = { Highlight.Default },
-                onDrawBackdrop = glass.recordBackdrop,
                 onDrawSurface = glass.drawSurface,
             )
             .fillMaxSize()

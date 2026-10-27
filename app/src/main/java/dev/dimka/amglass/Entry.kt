@@ -30,6 +30,8 @@ class Entry : IXposedHookLoadPackage, IXposedHookZygoteInit {
         if (lpparam.packageName != PACKAGE) return
         val cl = lpparam.classLoader
         hookModuleResources()
+        runCatching { DynamicColors.hook() }.onFailure { log("dynamic colors hook failed: $it") }
+        runCatching { SystemFont.hook() }.onFailure { log("system font hook failed: $it") }
         val blurViewClass = cl.loadClass("eightbitlab.com.blurview.BlurView")
         val blurTargetClass = cl.loadClass("eightbitlab.com.blurview.BlurTarget")
 
@@ -79,7 +81,7 @@ class Entry : IXposedHookLoadPackage, IXposedHookZygoteInit {
             val (switch, bgDraw) = SwitchGlass.bind(cl)
             XposedBridge.hookMethod(switch, object : XC_MethodHook() {
                 override fun beforeHookedMethod(param: MethodHookParam) {
-                    param.args[4] = SwitchGlass.markerColors()
+                    param.args[4] = SettingsM3.switchColors()
                 }
             })
             XposedBridge.hookMethod(bgDraw, object : XC_MethodHook() {
@@ -89,6 +91,12 @@ class Entry : IXposedHookLoadPackage, IXposedHookZygoteInit {
                 }
             })
         }.onFailure { log("switch hook failed: $it") }
+
+        // Settings screens: Material 3 segmented lists and headers.
+        runCatching { SettingsM3.hook(cl) }.onFailure { log("settings m3 hook failed: $it") }
+
+        // Material 3 shared-axis transitions for pushes inside a tab.
+        runCatching { Transitions.hook(cl) }.onFailure { log("transitions hook failed: $it") }
 
         // Popup menus blur with Haze inside the app's own Compose; swap that effect for glass.
         runCatching {
@@ -109,20 +117,27 @@ class Entry : IXposedHookLoadPackage, IXposedHookZygoteInit {
      * those ids to the module APK.
      */
     private fun hookModuleResources() {
-        val moduleRes by lazy {
+        fun load(): Resources {
             val assets = AssetManager::class.java.getDeclaredConstructor().newInstance()
             AssetManager::class.java.getMethod("addAssetPath", String::class.java).invoke(assets, modulePath)
             val system = Resources.getSystem()
-            @Suppress("DEPRECATION") Resources(assets, system.displayMetrics, system.configuration)
+            @Suppress("DEPRECATION") return Resources(assets, system.displayMetrics, system.configuration)
         }
+        var moduleRes: Resources? = null
         XposedBridge.hookMethod(
             Resources::class.java.getMethod("getText", Int::class.javaPrimitiveType),
             object : XC_MethodHook() {
                 override fun beforeHookedMethod(param: MethodHookParam) {
                     val id = param.args[0] as Int
-                    if (id ushr 24 == MODULE_PACKAGE_ID && param.thisObject !== moduleRes) {
-                        param.result = moduleRes.getText(id)
-                    }
+                    if (id ushr 24 != MODULE_PACKAGE_ID || param.thisObject === moduleRes) return
+                    // A missing label must never crash the host (seen once right after a module
+                    // reinstall): reload the module resources once, then fall back to "".
+                    param.result = runCatching { (moduleRes ?: load().also { moduleRes = it }).getText(id) }
+                        .recoverCatching { load().also { moduleRes = it }.getText(id) }
+                        .getOrElse {
+                            log("module string 0x${id.toString(16)} unavailable: $it")
+                            ""
+                        }
                 }
             },
         )
