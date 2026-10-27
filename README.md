@@ -19,7 +19,9 @@ iOS 26 liquid glass for Apple Music on Android. An LSPosed / Xposed module.
 - **Tab bar.** A floating glass capsule with blur and edge refraction. Press and drag a tab and the selection turns into a lens.
 - **Mini player.** The same glass. Text and buttons switch between black and white depending on what's under them.
 - **Header buttons and the ⋯ menu.** Glass instead of the stock blur.
-- **Settings switches.** iOS-style green track with a pill thumb that turns to glass while pressed.
+- **Material You.** Your wallpaper accent instead of Apple Music's blue, and the system font instead of SF Pro.
+- **Settings.** Material 3 segmented lists, headers, switches, radio buttons and sliders.
+- **Transitions.** Shared-axis slide when you open and close pages inside a tab.
 
 ## Install
 
